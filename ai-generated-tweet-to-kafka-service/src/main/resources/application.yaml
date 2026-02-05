@@ -1,0 +1,53 @@
+ai-generated-tweet-to-kafka-service:
+  streaming-data-keywords:
+    - Java
+    - Microservices
+    - Spring
+    - Kafka
+    - Elasticsearch
+  scheduler-duration-sec: 30
+  prompt: "Generate a json with 4 elements called createdAt, id, text and user. The user element has also a nested json element called id. For createdAt use a date in format 'EEE MMM dd HH:mm:ss zzz yyyy', example date would be 'Fri Oct 06 14:32:25 UTC 2023', for id use a java long value, for text use a string including one or more of the keywords: {keywords}. For id field of the user field use a java long value. Do not write anything on the response other than the json text. That means omit ```json part in the response and any other explanation. Do not use new lines in the response. Do not include the L letter at the end of the long values. Only give 1 result in the response."
+  keywords-placeholder: '{keywords}'
+
+server:
+  port: 8000
+  
+spring:
+  ai:
+    ollama:
+      base-url: http://localhost:11434
+      chat:
+        options:
+          model: llama3.1:8b
+          temperature: 0.8
+          top-p: 0.9
+          max-new-tokens: 150
+          format: json
+
+retry-config:
+  initial-interval-ms: 1000
+  max-interval-ms: 10000
+  multiplier: 2.0
+  maxAttempts: 3
+  sleep-time-ms: 2000
+
+kafka-config:
+  bootstrap-servers: localhost:19092,localhost:29092,localhost:39092
+  topic-name: twitter-topic
+  topic-name-to-create:
+    - twitter-topic
+  num-of-partitions: 3
+  replication-factor: 3
+
+kafka-producer-config:
+  key-serializer-class: org.apache.kafka.common.serialization.LongSerializer
+  value-serializer-class: io.apicurio.registry.serde.avro.AvroKafkaSerializer
+  compression-type: snappy
+  acks: all
+  batch-size: 16384
+  linger-ms: 5
+  request-timeout-ms: 60000
+  retry-count: 5
+  properties:
+    apicurio.registry.url: http://localhost:8081/apis/registry/v2
+    apicurio.registry.auto-register: true

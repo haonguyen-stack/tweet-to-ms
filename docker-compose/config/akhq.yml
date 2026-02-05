@@ -1,0 +1,5 @@
+akhq:
+  connections:
+    kafka-local:
+      properties:
+        bootstrap.servers: "kafka-broker-1:9092,kafka-broker-2:9092,kafka-broker-3:9092"

@@ -1,0 +1,160 @@
+services:
+
+  postgres:
+    image: postgres:15
+    container_name: apicurio-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: registry
+      POSTGRES_USER: registry
+      POSTGRES_PASSWORD: registry
+    volumes:
+      - apicurio-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U registry"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ${GLOBAL_NETWORK}
+
+  pgadmin:
+    image: dpage/pgadmin4:8
+    container_name: pgadmin
+    restart: unless-stopped
+    ports:
+      - 5050:80
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  apicurio-registry:
+    image: apicurio/apicurio-registry-sql:2.5.10.Final
+    container_name: apicurio-registry
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - 8081:8080
+    environment:
+      QUARKUS_HTTP_PORT: 8080
+      REGISTRY_DATASOURCE_URL: jdbc:postgresql://postgres:5432/registry
+      REGISTRY_DATASOURCE_USERNAME: registry
+      REGISTRY_DATASOURCE_PASSWORD: registry
+      REGISTRY_STORAGE_KIND: sql
+    networks:
+      - ${GLOBAL_NETWORK}
+
+  kafka-broker-1:
+    image: apache/kafka:${KAFKA_VERSION}
+    hostname: kafka-broker-1
+    container_name: kafka-broker-1
+    ports:
+      - "${KAFKA1_EXTERNAL_PORT}:19092"
+    environment:
+      KAFKA_CLUSTER_ID: ${KAFKA_CLUSTER_ID}
+    volumes:
+      - ./config/server-1.properties:/opt/kafka/config/kraft/server.properties
+      - kafka1-data:/var/lib/kafka/data
+    command: >
+      bash -c "
+      if [ ! -f /var/lib/kafka/data/meta.properties ]; then
+        /opt/kafka/bin/kafka-storage.sh format -t $${KAFKA_CLUSTER_ID} -c /opt/kafka/config/kraft/server.properties;
+      fi &&
+      /opt/kafka/bin/kafka-server-start.sh /opt/kafka/config/kraft/server.properties
+      "
+    networks:
+      - ${GLOBAL_NETWORK}
+
+  kafka-broker-2:
+    image: apache/kafka:${KAFKA_VERSION}
+    hostname: kafka-broker-2
+    container_name: kafka-broker-2
+    ports:
+      - "${KAFKA2_EXTERNAL_PORT}:29092"
+    environment:
+      KAFKA_CLUSTER_ID: ${KAFKA_CLUSTER_ID}
+    volumes:
+      - ./config/server-2.properties:/opt/kafka/config/kraft/server.properties
+      - kafka2-data:/var/lib/kafka/data
+    command: >
+      bash -c "
+      if [ ! -f /var/lib/kafka/data/meta.properties ]; then
+        /opt/kafka/bin/kafka-storage.sh format -t $${KAFKA_CLUSTER_ID} -c /opt/kafka/config/kraft/server.properties;
+      fi &&
+      /opt/kafka/bin/kafka-server-start.sh /opt/kafka/config/kraft/server.properties
+      "
+    networks:
+      - ${GLOBAL_NETWORK}
+
+  kafka-broker-3:
+    image: apache/kafka:${KAFKA_VERSION}
+    hostname: kafka-broker-3
+    container_name: kafka-broker-3
+    ports:
+      - "${KAFKA3_EXTERNAL_PORT}:39092"
+    environment:
+      KAFKA_CLUSTER_ID: ${KAFKA_CLUSTER_ID}
+    volumes:
+      - ./config/server-3.properties:/opt/kafka/config/kraft/server.properties
+      - kafka3-data:/var/lib/kafka/data
+    command: >
+      bash -c "
+      if [ ! -f /var/lib/kafka/data/meta.properties ]; then
+        /opt/kafka/bin/kafka-storage.sh format -t $${KAFKA_CLUSTER_ID} -c /opt/kafka/config/kraft/server.properties;
+      fi &&
+      /opt/kafka/bin/kafka-server-start.sh /opt/kafka/config/kraft/server.properties
+      "
+    networks:
+      - ${GLOBAL_NETWORK}
+
+  kafka-init:
+    image: apache/kafka:${KAFKA_VERSION}
+    depends_on:
+      - kafka-broker-1
+    command: >
+      bash -c "
+      sleep 20 &&
+      /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka-broker-1:9092 --create --if-not-exists --topic twitter-topic --partitions 3 --replication-factor 3
+      "
+    networks:
+      - ${GLOBAL_NETWORK}
+
+  akhq:
+    image: tchiotludo/akhq
+    ports:
+      - 8080:8080
+    volumes:
+      - ./config/akhq.yml:/app/application.yml
+    depends_on:
+      - kafka-broker-1
+    networks:
+      - ${GLOBAL_NETWORK}
+
+  prometheus:
+    image: prom/prometheus
+    ports:
+      - 9090:9090
+    volumes:
+      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - ${GLOBAL_NETWORK}
+
+  grafana:
+    image: grafana/grafana
+    ports:
+      - 3000:3000
+    networks:
+      - ${GLOBAL_NETWORK}
+
+volumes:
+  kafka1-data:
+  kafka2-data:
+  kafka3-data:
+  apicurio-db:
+  pgadmin-data:
