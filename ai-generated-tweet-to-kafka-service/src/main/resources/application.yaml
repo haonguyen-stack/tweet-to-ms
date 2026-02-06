@@ -10,7 +10,7 @@ ai-generated-tweet-to-kafka-service:
   keywords-placeholder: '{keywords}'
 
 server:
-  port: 8000
+  port: 5005
   
 spring:
   ai:
@@ -49,5 +49,5 @@ kafka-producer-config:
   request-timeout-ms: 60000
   retry-count: 5
   properties:
-    apicurio.registry.url: http://localhost:8081/apis/registry/v2
+    apicurio.registry.url: http://localhost:9081/apis/registry/v2
     apicurio.registry.auto-register: true

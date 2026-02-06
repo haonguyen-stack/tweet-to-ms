@@ -1,0 +1,25 @@
+services:
+  ai-generated-tweet-to-kafka-service:
+    image: ai-generated-tweet-to-kafka-service:1.0-SNAPSHOT
+    container_name: ai-generated-tweet-to-kafka-service
+
+    ports:
+      - "5005:5005"
+
+    environment:
+
+      JAVA_OPTS: "-Xms256m -Xmx512m"
+
+      # Kafka
+      KAFKA_CONFIG_BOOTSTRAP_SERVERS: kafka-broker-1:9092,kafka-broker-2:9092,kafka-broker-3:9092
+      KAFKA_CONFIG_TOPIC_NAME: twitter-topic
+
+      # Apicurio
+      KAFKA_PRODUCER_CONFIG_PROPERTIES_APICURIO_REGISTRY_URL: http://apicurio-registry:8080/apis/registry/v2
+      KAFKA_PRODUCER_CONFIG_PROPERTIES_APICURIO_REGISTRY_AUTO_REGISTER: "true"
+
+      # Ollama
+      SPRING_AI_OLLAMA_BASE_URL: http://host.docker.internal:11434
+
+    networks:
+      - ${GLOBAL_NETWORK}
