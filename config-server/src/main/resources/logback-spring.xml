@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
 
+    <springProperty name="log.app-name" source="log.app-name" />
+
     <property name="DEV_HOME" value="${LOG_PATH:-./logs}"/>
-    <property name="APP_NAME" value="ai-generated-tweet-to-kafka-service"/>
+    <property name="APP_NAME" value="config-server"/>
 
     <include resource="logback-common.xml"/>
-
 </configuration>
