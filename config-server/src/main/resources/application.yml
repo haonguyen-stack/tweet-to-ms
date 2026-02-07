@@ -1,0 +1,24 @@
+server:
+    port: 8888
+
+logging:
+  level:
+    ROOT: INFO
+    org.springframework.cloud.config: DEBUG
+
+spring:
+  application:
+    name: config-server
+  cloud:
+    config:
+      server:
+        git:
+          uri: https://github.com/haonguyen-stack/config-server-repository
+          default-label: main
+          clone-on-start: true
+          username: haonguyen-stack
+          password: ${GITHUB_TOKEN}
+      fail-fast: true
+
+log:
+  app-name: config-server 
