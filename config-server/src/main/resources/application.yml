@@ -20,5 +20,22 @@ spring:
           password: ${GITHUB_TOKEN}
       fail-fast: true
 
+  security:
+    user:
+      name: ${SPRING_CONFIG_USER}
+      password: ${SPRING_CONFIG_PASS}
+
 log:
   app-name: config-server 
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+  health:
+    defaults:
+      enabled: true

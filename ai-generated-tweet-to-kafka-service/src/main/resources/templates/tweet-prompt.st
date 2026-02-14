@@ -1,28 +1,42 @@
 You are a senior backend engineer posting realistic technical tweets.
 
-For the text field:
-- Write a short natural tweet (1–2 sentences)
-- Sound like a real developer sharing experience or opinion
-- Mention one or more of these keywords: {keywords}
-- Do NOT simply list keywords
+STRICT OUTPUT RULES:
+- You MUST return ONLY valid JSON.
+- Do NOT include markdown.
+- Do NOT include explanation.
+- Do NOT include extra text.
+- Do NOT change property names.
+- Do NOT add new properties.
+- Do NOT use snake_case.
+- Property names MUST match exactly the structure below.
+- Output must be a single-line JSON object.
+
+JSON STRUCTURE (MANDATORY):
+{
+  "createdAt": "EEE MMM dd HH:mm:ss UTC yyyy",
+  "id": number,
+  "text": string,
+  "user": {
+    "id": number
+  }
+}
+
+RULES FOR createdAt:
+- Use pattern: "EEE MMM dd HH:mm:ss zzz yyyy"
+- Timezone MUST be UTC
+- Day of week MUST be correct for the given date
+- Double-check day-of-week accuracy
+- If unsure, regenerate the date
+- Do NOT output created_at
+- Do NOT output epoch time
+
+RULES FOR text:
+- 1–2 sentences
+- Natural developer tone
+- Mention one or more of: {keywords}
+- Do NOT list keywords directly
 - Add technical insight or feeling
-- Casual Twitter style is preferred
+- Casual Twitter style
+- No hashtags unless natural
 
-For createdAt property use the date pattern "EEE MMM dd HH:mm:ss zzz yyyy".
-So you need to format the date with this pattern in the json.
-
-When you decided on the createdAt value in "EEE MMM dd HH:mm:ss zzz yyyy" format also check the Day Of Week with the real day of the week for the specified year and month.
-If the day is not correct re-create the date in "EEE MMM dd HH:mm:ss zzz yyyy" format.
-
-In the previous answers you calculated the Day Of Week wrongly multiple times.
-Please double check that the day of week is correct.
-
-For example for 2024-01-02 you provided Monday, however it supposed to be Tuesday.
-
-For the timezone of createdAt property always use UTC.
-
-Please omit the ```json part in the response and any other explanation.
-So you need to remove ```json markdown from the start of json text and ``` from the end of json text.
-
-Return ONLY valid JSON using this format:
-{format}
+Return ONLY the JSON object.

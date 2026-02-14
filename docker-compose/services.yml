@@ -1,25 +1,40 @@
 services:
-  ai-generated-tweet-to-kafka-service:
-    image: ai-generated-tweet-to-kafka-service:1.0-SNAPSHOT
-    container_name: ai-generated-tweet-to-kafka-service
-
+  config-server:
+    image: config-server:1.0
+    container_name: config-server
     ports:
-      - "5005:5005"
-
+      - "${CONFIG_SERVER_PORT}:8888"
     environment:
+      SPRING_CONFIG_USER: ${SPRING_CONFIG_USER}
+      SPRING_CONFIG_PASS: ${SPRING_CONFIG_PASS}
+      GITHUB_TOKEN: ${GITHUB_TOKEN}
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider -q http://localhost:8888/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - ${GLOBAL_NETWORK}
 
+
+  ai-generated-tweet-to-kafka-service:
+    image: ai-generated-tweet-to-kafka-service:1.0
+    container_name: ai-generated-tweet-to-kafka-service
+    ports:
+      - "${TWIITER_SERVER_PORT}:5005"
+    depends_on:
+      config-server:
+        condition: service_healthy
+    environment:
       JAVA_OPTS: "-Xms256m -Xmx512m"
-
-      # Kafka
       KAFKA_CONFIG_BOOTSTRAP_SERVERS: kafka-broker-1:9092,kafka-broker-2:9092,kafka-broker-3:9092
-      KAFKA_CONFIG_TOPIC_NAME: twitter-topic
-
-      # Apicurio
+      KAFKA_CONFIG_TOPIC_NAME: ${KAFKA_TOPIC}
       KAFKA_PRODUCER_CONFIG_PROPERTIES_APICURIO_REGISTRY_URL: http://apicurio-registry:8080/apis/registry/v2
       KAFKA_PRODUCER_CONFIG_PROPERTIES_APICURIO_REGISTRY_AUTO_REGISTER: "true"
-
-      # Ollama
       SPRING_AI_OLLAMA_BASE_URL: http://host.docker.internal:11434
-
+      SPRING_CONFIG_IMPORT: configserver:http://config-server:8888
+      SPRING_CLOUD_CONFIG_USERNAME: ${SPRING_CONFIG_USER}
+      SPRING_CLOUD_CONFIG_PASSWORD: ${SPRING_CONFIG_PASS}
     networks:
       - ${GLOBAL_NETWORK}

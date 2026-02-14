@@ -5,15 +5,15 @@ services:
     container_name: apicurio-postgres
     restart: unless-stopped
     ports:
-      - 5432:5432
+      - "${POSTGRES_PORT}:5432"
     environment:
-      POSTGRES_DB: registry
-      POSTGRES_USER: registry
-      POSTGRES_PASSWORD: registry
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - apicurio-db:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U registry"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -25,10 +25,10 @@ services:
     container_name: pgadmin
     restart: unless-stopped
     ports:
-      - 5050:80
+      - "${PGADMIN_PORT}:80"
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@example.com
-      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
       PGADMIN_CONFIG_SERVER_MODE: "True"
     volumes:
       - pgadmin-data:/var/lib/pgadmin
@@ -48,11 +48,14 @@ services:
     ports:
       - 5051:8080
     environment:
+      QUARKUS_PROFILE: prod
       QUARKUS_HTTP_PORT: 8080
-      REGISTRY_DATASOURCE_URL: jdbc:postgresql://postgres:5432/registry
-      REGISTRY_DATASOURCE_USERNAME: registry
-      REGISTRY_DATASOURCE_PASSWORD: registry
-      REGISTRY_STORAGE_KIND: sql
+      QUARKUS_DATASOURCE_DB_KIND: postgresql
+      QUARKUS_DATASOURCE_JDBC_URL: jdbc:postgresql://${POSTGRES_HOST}:5432/${POSTGRES_DB}
+      QUARKUS_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      QUARKUS_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      QUARKUS_HIBERNATE_ORM_DATABASE_GENERATION: update
+      APICURIO_STORAGE_KIND: sql
     networks:
       - ${GLOBAL_NETWORK}
     healthcheck:
@@ -140,7 +143,7 @@ services:
   akhq:
     image: tchiotludo/akhq
     ports:
-      - 8080:8080
+      - "${AKHQ_PORT}:8080"
     volumes:
       - ./config/akhq.yml:/app/application.yml
     depends_on:
@@ -153,7 +156,7 @@ services:
   prometheus:
     image: prom/prometheus
     ports:
-      - 9090:9090
+      - "${PROMETHEUS_PORT}:9090"
     volumes:
       - ./config/prometheus.yml:/etc/prometheus/prometheus.yml
     networks:
@@ -162,7 +165,7 @@ services:
   grafana:
     image: grafana/grafana
     ports:
-      - 3000:3000
+      - "${GRAFANA_PORT}:3000"
     networks:
       - ${GLOBAL_NETWORK}
 
